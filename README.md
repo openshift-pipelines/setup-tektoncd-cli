@@ -10,9 +10,9 @@ GitHub Action to rollout [Tekton CLI (`tkn`)][githubTektonCLI].
 ```yaml
 ---
 jobs:
-  setup-tekton-cli:
+  setup-tektoncd-cli:
     steps:
-      - uses: otaviof/setup-tektoncd-cli@main
+      - uses: openshift-pipelines/setup-tektoncd-cli@main
         with:
           version: latest
 ```
