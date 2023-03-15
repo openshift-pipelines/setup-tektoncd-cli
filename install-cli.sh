@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+#
+# Download and install the informed tkn version, using "/usr/local/bin" as PREFIX.
+#
 
 shopt -s inherit_errexit
 set -eu -o pipefail
@@ -10,21 +13,14 @@ phase "Inspecting enviroment variables"
 readonly INPUT_VERSION="${INPUT_VERSION:-}"
 
 [[ -z "${INPUT_VERSION}" ]] &&
-	fail "INPUT_VERSION environment variable is not set!"
+    fail "INPUT_VERSION environment variable is not set!"
 
 phase "Searching for '${INPUT_VERSION}' release artifact"
 
-org_repo="tektoncd/cli"
-url=""
-
-if [ "${INPUT_VERSION}" == "latest" ]; then
-	url=$(get_latest_release_artifact_url ${org_repo})
-else
-	url=$(get_release_artifact_url ${org_repo} ${INPUT_VERSION})
-fi
+readonly url=$(get_release_artifact_url "tektoncd/cli" ${INPUT_VERSION})
 
 [[ -z "${url}" ]] &&
-	fail "Unable to acrquire the release artifact download URL"
+    fail "Unable to acrquire the release artifact download URL"
 
 phase "Download URL '${url}'"
 download_and_install ${url} "tkn"
