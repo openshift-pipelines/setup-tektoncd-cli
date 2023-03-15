@@ -22,57 +22,45 @@ function probe_bin_on_path() {
     fi
 }
 
-# print out the github release url for the informed organization/repository.
-function github_releases_url() {
-	local org_repo="${1}"
-	echo "https://api.github.com/repos/${org_repo}/releases"
-}
-
-# get the latest release artifact url.
-function get_latest_release_artifact_url() {
-	local org_repo="${1}"
-
-	local url="$(github_releases_url ${org_repo})"
-
-	echo $(
-		curl -s ${url}/latest |
-			jq -r '.assets[].browser_download_url' |
-			egrep -i 'linux_(x86_64|amd64)' |
-			head -n 1
-	)
-}
-
-# get the artifact url for the specific version (release).
+# get the artifact url for the specific version (release) or latest.
 function get_release_artifact_url() {
-	local org_repo="${1}"
-	local version="${2}"
+    local _org_repo="${1}"
+    local _version="${2}"
 
-	local url=$(github_releases_url ${org_repo})
-
-	echo $(
-		curl -s ${url} |
-			jq -r ".[] | select(.tag_name == \"${version}\") | .assets[].browser_download_url" |
-			egrep -i 'linux_(x86_64|amd64)' |
-			head -n 1
-	)
+    local _url="https://api.github.com/repos/${_org_repo}/releases"
+    if [[ "${_version}" == "latest" ]]; then
+        echo $(
+            curl -s ${_url}/latest |
+                jq -r '.assets[].browser_download_url' |
+                egrep -i 'linux_(x86_64|amd64)' |
+                head -n 1
+        )
+    else
+        echo $(
+            curl -s ${_url} |
+                jq -r ".[] | select(.tag_name == \"${_version}\") | .assets[].browser_download_url" |
+                egrep -i 'linux_(x86_64|amd64)' |
+                head -n 1
+        )
+    fi
 }
 
 # given the download url and excutable name, download and extract the executable from the artifact
 # tarball on the `/usr/local/bin` (prefix).
 function download_and_install() {
-    local url="${1}"
-	local bin_name="${2}"
+    local _url="${1}"
+    local _bin_name="${2}"
 
-	local tarball="$(basename ${url})"
-    local tmp_tarball="/tmp/${tarball}"
-    local prefix="/usr/local/bin"
+    local _tarball="$(basename ${_url})"
+    local _tmp_tarball="/tmp/${_tarball}"
+    local _prefix="/usr/local/bin"
 
-    [[ -f "${tmp_tarball}" ]] && rm -f "${tmp_tarball}"
+    [[ -f "${_tmp_tarball}" ]] && rm -f "${_tmp_tarball}"
 
-    phase "Downloading '${url}' to '${tmp_tarball}'"
-    curl -sL ${url} >${tmp_tarball}
+    phase "Downloading '${_url}' to '${_tmp_tarball}'"
+    curl -sL ${_url} >${_tmp_tarball}
 
-    phase "Installing '${bin_name}' on prefix '${prefix}'"
-    tar -C ${prefix} -zxvpf ${tmp_tarball} ${bin_name}
-    rm -fv "${tmp_tarball}"
+    phase "Installing '${_bin_name}' on prefix '${_prefix}'"
+    tar -C ${_prefix} -zxvpf ${_tmp_tarball} ${_bin_name}
+    rm -fv "${_tmp_tarball}"
 }
